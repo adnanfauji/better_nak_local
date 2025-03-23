@@ -12,7 +12,10 @@ class RegisterScreen extends StatefulWidget {
 class RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final AuthController authController = AuthController();
   bool isLoading = false;
 
@@ -20,8 +23,15 @@ class RegisterScreenState extends State<RegisterScreen> {
   void register() async {
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
-        passwordController.text.isEmpty) {
+        phoneController.text.isEmpty ||
+        passwordController.text.isEmpty ||
+        confirmPasswordController.text.isEmpty) {
       _showSnackBar("Semua kolom wajib diisi!", Colors.red);
+      return;
+    }
+
+    if (passwordController.text != confirmPasswordController.text) {
+      _showSnackBar("Password tidak cocok!", Colors.red);
       return;
     }
 
@@ -31,6 +41,7 @@ class RegisterScreenState extends State<RegisterScreen> {
       final response = await authController.register(
         nameController.text,
         emailController.text,
+        phoneController.text,
         passwordController.text,
       );
 
@@ -97,22 +108,31 @@ class RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 10),
                 _buildTextField(emailController, "Email"),
                 const SizedBox(height: 10),
+                _buildTextField(phoneController, "Telepon"),
+                const SizedBox(height: 10),
                 _buildTextField(passwordController, "Password",
                     isPassword: true),
+                const SizedBox(height: 10),
+                _buildTextField(confirmPasswordController, "Ulangi password",
+                    isPassword: true),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: isLoading ? null : register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isLoading ? null : register,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
+                    child: isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("Daftar",
+                            style:
+                                TextStyle(fontSize: 18, color: Colors.white)),
                   ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Register", style: TextStyle(fontSize: 18)),
                 ),
                 const SizedBox(height: 10),
                 Center(

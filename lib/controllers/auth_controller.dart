@@ -24,11 +24,17 @@ class AuthController {
   Future<Map<String, dynamic>> register(
     String name,
     String email,
+    String phone,
     String password,
   ) async {
     final response = await http.post(
       Uri.parse('$baseUrl/register.php'),
-      body: {"name": name, "email": email, "password": password},
+      body: {
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "password": password
+      },
     );
     return json.decode(response.body);
   }
