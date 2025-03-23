@@ -11,10 +11,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
+    return const GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Better-Nak',
-      home: const SplashScreen(), // Awali dengan Splash Screen
+      home: SplashScreen(), // Awali dengan Splash Screen
     );
   }
 }

@@ -1,10 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'login_screen.dart';
+import 'profil_screen.dart';
+import 'cart_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String name;
   const HomeScreen({super.key, required this.name});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  DateTime? lastPressed;
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 3) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,32 +33,42 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Better-Nak',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
         backgroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.bell),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(LucideIcons.shoppingBag),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.exit_to_app),
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-            ),
+            icon: const Icon(LucideIcons.shoppingBag, color: Colors.green),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
+            },
           ),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        selectedItemColor: Colors.green,
+        unselectedItemColor: Colors.grey,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.insert_chart), label: 'Laporan'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Akun'),
+            icon: Icon(Icons.home),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(LucideIcons.messageCircle),
+            label: 'Pesan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_none),
+            label: 'Notifikasi',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            label: 'Akun',
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -70,8 +101,8 @@ class HomeScreen extends StatelessWidget {
               crossAxisSpacing: 10,
               childAspectRatio: 3,
               children: [
-                _categoryCard('Sapi', LucideIcons.plus),
-                _categoryCard('Kambing', LucideIcons.plus),
+                _categoryCard('Sapi', LucideIcons.search),
+                _categoryCard('Kambing', LucideIcons.search),
               ],
             ),
             const SizedBox(height: 20),
@@ -83,11 +114,11 @@ class HomeScreen extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _feedItem('Kangkung', '30 kg', 'images/kambing.jpeg'),
+                  child: _feedItem('Kambing', '30 kg', 'images/kambing.jpeg'),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _feedItem('Bran Sapi', '35 kg', 'images/kambing2.jpg'),
+                  child: _feedItem('Kambing', '35 kg', 'images/kambing2.jpg'),
                 ),
               ],
             ),
