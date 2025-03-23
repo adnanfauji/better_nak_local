@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "artifactType": {
+    "type": "COMPATIBLE_SCREEN_MANIFEST",
+    "kind": "Directory"
+  },
+  "applicationId": "com.example.better_nak_local",
+  "variantName": "debug",
+  "elements": []
+}

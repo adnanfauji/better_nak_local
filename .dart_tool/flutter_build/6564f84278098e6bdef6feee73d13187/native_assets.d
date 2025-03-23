@@ -1,0 +1,1 @@
+ D:\\01.\ Sistem\ Informasi\\Semester\ 4\\05.\ Mobile\ Apps\ Project\\Trial\ Project\\better_nak_local\\.dart_tool\\flutter_build\\6564f84278098e6bdef6feee73d13187\\native_assets.yaml: 
