@@ -1,4 +1,4 @@
-#Mon Mar 24 00:06:28 WIB 2025
+#Mon Mar 24 11:17:29 WIB 2025
 base.0=D\:\\01. Sistem Informasi\\Semester 4\\05. Mobile Apps Project\\Trial Project\\better_nak_local\\build\\app\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
 base.1=D\:\\01. Sistem Informasi\\Semester 4\\05. Mobile Apps Project\\Trial Project\\better_nak_local\\build\\app\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
 base.2=D\:\\01. Sistem Informasi\\Semester 4\\05. Mobile Apps Project\\Trial Project\\better_nak_local\\build\\app\\intermediates\\dex\\debug\\mergeProjectDexDebug\\15\\classes.dex
