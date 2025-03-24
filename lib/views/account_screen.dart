@@ -45,7 +45,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           buildSettingItem(
             title: 'Username',
-            value: 'balqisfashionstore',
+            value: 'Adnan Fauji',
             onTap: () {
               // Navigasi ke halaman ubah username
             },
@@ -94,7 +94,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      'Shopee tidak menyimpan data Sidik Jari, \nkarena data hanya tersimpan \ndi dalam perangkatmu.',
+                      'Better_nak tidak menyimpan data Sidik Jari, \nkarena data hanya tersimpan \ndi dalam perangkatmu.',
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],

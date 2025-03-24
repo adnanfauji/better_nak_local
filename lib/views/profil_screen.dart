@@ -62,9 +62,9 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              buildProfileItem('Nama', 'Sasandra Nabila Shihab'),
-              buildProfileItem('Email', 'sue.elliott@example.com'),
-              buildProfileItem('Nomor Telepon', '+62 822 9** ***'),
+              buildProfileItem('Nama', 'Adnan Fauji'),
+              buildProfileItem('Email', 'adnanfauji48@gmail.com'),
+              buildProfileItem('Nomor Telepon', '0812 8*** ****'),
               buildProfileItem('Password', '********'),
               const SizedBox(height: 40),
               Center(

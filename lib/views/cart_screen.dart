@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -103,7 +104,11 @@ class CartScreen extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Aksi saat checkout
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const CheckoutScreen()),
+                    );
                   },
                   child: const Text('Checkout(1)',
                       style: TextStyle(color: Colors.white)),
