@@ -14,7 +14,8 @@ class MyApp extends StatelessWidget {
     return const GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Better-Nak',
-      home: SplashScreen(), // Awali dengan Splash Screen
+      home: SplashScreen(),
+      // Awali dengan Splash Screen
     );
   }
 }

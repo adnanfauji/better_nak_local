@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'login_screen.dart';
 import 'cart_screen.dart';
-import 'account_settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -11,22 +10,13 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(color: Colors.green)),
+        title:
+            const Text('Profile saya', style: TextStyle(color: Colors.green)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.green),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.settings, color: Colors.green),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const AccountSettingsScreen()),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(LucideIcons.shoppingBag, color: Colors.green),
             onPressed: () {
@@ -51,7 +41,7 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     const CircleAvatar(
                       radius: 40,
-                      backgroundImage: AssetImage('assets/profile.jpg'),
+                      backgroundImage: AssetImage('images/user.png'),
                     ),
                     TextButton(
                       onPressed: () {},

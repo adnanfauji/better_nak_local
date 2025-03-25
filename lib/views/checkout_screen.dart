@@ -1,8 +1,36 @@
 import 'package:flutter/material.dart';
 import 'payment_method_screen.dart';
+import 'select_address_screen.dart';
 
-class CheckoutScreen extends StatelessWidget {
+class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
+
+  @override
+  State<CheckoutScreen> createState() => _CheckoutScreenState();
+}
+
+class _CheckoutScreenState extends State<CheckoutScreen> {
+  // Menyimpan alamat yang dipilih
+  Map<String, String> currentAddress = {
+    'name': 'Sasandra Mobile Shohib',
+    'phone': '(082) 3273-4589',
+    'address':
+        'Karawang, Jawa Barat, Indonesia\nKecamatan Klari, Karawang, Jawa Barat, 41361',
+  };
+
+  // Navigasi ke SelectAddressScreen dan perbarui alamat
+  Future<void> _navigateToSelectAddress() async {
+    final selectedAddress = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SelectAddressScreen()),
+    );
+
+    if (selectedAddress != null) {
+      setState(() {
+        currentAddress = selectedAddress;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +61,14 @@ class CheckoutScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Sasandra Mobile Shohib - (082) 3273-4589',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                  Text(
+                    '${currentAddress['name']} - ${currentAddress['phone']}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Karawang, Jawa Barat, Indonesia\nKecamatan Klari, Karawang, Jawa Barat, 41361',
-                    style: TextStyle(color: Colors.grey),
+                  Text(
+                    currentAddress['address'] ?? '',
+                    style: const TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   ElevatedButton(
@@ -50,9 +78,7 @@ class CheckoutScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onPressed: () {
-                      // Aksi ubah alamat
-                    },
+                    onPressed: _navigateToSelectAddress,
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -106,49 +132,13 @@ class CheckoutScreen extends StatelessWidget {
                     alignment: Alignment.topRight,
                     child: TextButton(
                       onPressed: () {
-                        // Hapus item
+                        // Logika hapus item
                       },
                       child: const Text(
                         'Hapus',
                         style: TextStyle(color: Colors.red),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Pesan untuk Penjual
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'Pesan untuk Penjual',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Opsi Pengiriman
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Opsi Pengiriman',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Reguler\nEst. 2-3 Hari'),
-                      Text('Rp50.000'),
-                    ],
                   ),
                 ],
               ),
@@ -175,9 +165,8 @@ class CheckoutScreen extends StatelessWidget {
                       );
 
                       if (selectedMethod != null) {
-                        // Use the selectedMethod variable
-                        // For example, you can print it or save it to a state
-                        print('Selected payment method: $selectedMethod');
+                        // Aksi setelah memilih metode pembayaran
+                        print('Metode Pembayaran: $selectedMethod');
                       }
                     },
                     child: const Row(
@@ -258,6 +247,7 @@ class CheckoutScreen extends StatelessWidget {
     );
   }
 
+  // Widget untuk membangun detail pembayaran
   Widget _buildPaymentDetail(String title, String value,
       {bool isBold = false}) {
     return Padding(

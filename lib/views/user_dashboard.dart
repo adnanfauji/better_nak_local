@@ -1,8 +1,9 @@
+import 'package:better_nak_local/views/my_account_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'profil_screen.dart';
 import 'cart_screen.dart';
 import 'notification_screen.dart';
+import 'message_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String name;
@@ -20,6 +21,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _selectedIndex = index;
     });
 
+    if (index == 1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const MessageScreen()),
+      );
+    }
+
     if (index == 2) {
       Navigator.push(
         context,
@@ -30,7 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (index == 3) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+        MaterialPageRoute(builder: (context) => const MyAccountScreen()),
       );
     }
   }

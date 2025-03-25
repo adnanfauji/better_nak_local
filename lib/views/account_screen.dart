@@ -1,3 +1,4 @@
+import 'package:better_nak_local/views/profil_screen.dart';
 import 'package:flutter/material.dart';
 
 class AccountScreen extends StatefulWidget {
@@ -40,7 +41,10 @@ class _AccountScreenState extends State<AccountScreen> {
             title: 'Profil Saya',
             value: '',
             onTap: () {
-              // Navigasi ke halaman profil
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
             },
           ),
           buildSettingItem(

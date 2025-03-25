@@ -1,3 +1,4 @@
+import 'package:better_nak_local/views/address_screen.dart';
 import 'package:flutter/material.dart';
 import 'account_screen.dart';
 
@@ -51,7 +52,10 @@ class AccountSettingsScreen extends StatelessWidget {
           buildSettingItem(
             title: 'Alamat Saya',
             onTap: () {
-              // Navigasi ke halaman alamat
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AddressScreen()),
+              );
             },
           ),
           buildSettingItem(
