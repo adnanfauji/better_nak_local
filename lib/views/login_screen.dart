@@ -1,9 +1,10 @@
-// ignore_for_file: use_build_context_synchronously, library_private_types_in_public_api
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously
 
 import 'package:flutter/material.dart';
 import '../controllers/auth_controller.dart';
 import 'user_dashboard.dart';
 import 'register_screen.dart';
+import 'seller_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,16 +27,29 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (response['status'] == 'success') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(name: response['name']),
-        ),
-      );
+      String role = response['role'];
+      String name = response['name'];
+
+      // Navigasi berdasarkan role
+      if (role == 'seller') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SellerDashboard(name: name),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(name: name),
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Login Gagal ❌ \${response['message']}"),
+        SnackBar(
+          content: Text("Login Gagal ❌ ${response['message']}"),
           backgroundColor: Colors.red,
         ),
       );

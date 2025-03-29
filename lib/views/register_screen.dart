@@ -19,6 +19,9 @@ class RegisterScreenState extends State<RegisterScreen> {
   final AuthController authController = AuthController();
   bool isLoading = false;
 
+  // Tambahkan variabel untuk role
+  String selectedRole = 'user'; // Default role
+
   // Fungsi untuk registrasi
   void register() async {
     if (nameController.text.isEmpty ||
@@ -43,6 +46,7 @@ class RegisterScreenState extends State<RegisterScreen> {
         emailController.text,
         phoneController.text,
         passwordController.text,
+        selectedRole, // Kirim role yang dipilih
       );
 
       if (!mounted) return; // Hindari context setelah widget di-dispose
@@ -97,7 +101,7 @@ class RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Isikan data-data dibawah ini dengan benar.",
+                  "Isikan data-data di bawah ini dengan benar.",
                   style: TextStyle(
                     color: Colors.black54,
                     fontSize: 16,
@@ -115,6 +119,28 @@ class RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 10),
                 _buildTextField(confirmPasswordController, "Ulangi password",
                     isPassword: true),
+                const SizedBox(height: 10),
+
+                // Dropdown untuk memilih role
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  items: const [
+                    DropdownMenuItem(value: 'user', child: Text('User')),
+                    DropdownMenuItem(value: 'seller', child: Text('Seller')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRole = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    labelText: "Pilih Role",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
