@@ -2,7 +2,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class AuthController {
-  final String baseUrl = "http://192.168.253.188/api_local";
+  final String baseUrl = "http://192.168.127.188/api_local";
 
   Future<bool> checkServerConnection() async {
     try {

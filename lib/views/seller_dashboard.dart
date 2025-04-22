@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'order_status_card.dart';
+import 'feature_card.dart';
 
 class SellerDashboard extends StatelessWidget {
   final String name;
@@ -20,7 +22,8 @@ class SellerDashboard extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Dashboard - $name"),
-        backgroundColor: Colors.purple,
+        automaticallyImplyLeading: false, // Menghilangkan tombol back
+        backgroundColor: Colors.green,
         actions: [
           IconButton(
             onPressed: () => _logout(context), // Memanggil fungsi logout
@@ -29,8 +32,14 @@ class SellerDashboard extends StatelessWidget {
           ),
         ],
       ),
-      body: const Center(
-        child: Text("Selamat datang di dashboard penjual!"),
+      body: SingleChildScrollView(
+        child: Column(
+          children: const [
+            OrderStatusCard(),
+            FeatureCard(),
+            // tambahkan widget lainnya di sini
+          ],
+        ),
       ),
     );
   }
