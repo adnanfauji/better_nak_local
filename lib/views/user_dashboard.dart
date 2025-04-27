@@ -1,20 +1,50 @@
-import 'package:better_nak_local/views/my_account_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'cart_screen.dart';
-import 'notification_screen.dart';
 import 'message_screen.dart';
+import 'notification_screen.dart';
+import 'my_account_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String name;
   const HomeScreen({super.key, required this.name});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  DateTime? lastPressed;
   int _selectedIndex = 0;
+  List<dynamic> _ads = [];
+  bool _adsLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAdvertised();
+  }
+
+  Future<void> fetchAdvertised() async {
+    setState(() => _adsLoading = true);
+    try {
+      final res = await http.get(
+          Uri.parse('http://10.0.2.2/api_local/get_advertised_livestock.php'));
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['success']) {
+          setState(() {
+            _ads = body['data'];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetch ads: $e');
+    } finally {
+      setState(() => _adsLoading = false);
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -92,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Search Bar
             TextField(
               decoration: InputDecoration(
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
@@ -107,36 +138,81 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Kategori
             const Text('Kategori',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             GridView.count(
               shrinkWrap: true,
-              crossAxisCount: 2,
+              crossAxisCount: 3,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
               childAspectRatio: 3,
               children: [
-                _categoryCard('Sapi', LucideIcons.search),
-                _categoryCard('Kambing', LucideIcons.search),
+                _categoryCard('Sapi', LucideIcons.beef),
+                _categoryCard('Sheep', LucideIcons.beer),
+                _categoryCard('Domba', LucideIcons.bird),
               ],
             ),
             const SizedBox(height: 20),
-            _sectionTitle('Ternak Terpopuler'),
-            _popularItem('Sapi Limousin', '40 Bulan', '100 kg',
-                '45 Ekor Hewan Ternak', 'images/cow.jpg'),
-            const SizedBox(height: 20),
-            _sectionTitle('Ternak Terlaris'),
-            Row(
-              children: [
-                Expanded(
-                  child: _feedItem('Kambing', '30 kg', 'images/kambing.jpeg'),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _feedItem('Kambing', '35 kg', 'images/kambing2.jpg'),
-                ),
-              ],
+
+            // Ternak Terkini (Iklan Terkini)
+            const Text('Ternak Terkini',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 180,
+              child: _adsLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _ads.isEmpty
+                      ? const Center(
+                          child: Text('Belum ada ternak yang di iklankan!'))
+                      : ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _ads.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, i) {
+                            final ad = _ads[i];
+                            return SizedBox(
+                              width: 140,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      ad['photo'],
+                                      height: 100,
+                                      width: 140,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => Image.asset(
+                                        'images/default.jpg',
+                                        height: 100,
+                                        width: 140,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    ad['name'] ?? '',
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Rp${ad['price'] ?? '0'}',
+                                    style: const TextStyle(color: Colors.green),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
@@ -152,72 +228,6 @@ class _HomeScreenState extends State<HomeScreen> {
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: Colors.amber, width: 1.5),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-    );
-  }
-
-  Widget _popularItem(
-      String title, String age, String weight, String stock, String imagePath) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(imagePath,
-                fit: BoxFit.cover, height: 150, width: double.infinity),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text('$age • $weight'),
-                const SizedBox(height: 4),
-                Text(stock),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _feedItem(String title, String stock, String imagePath) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(imagePath,
-                fit: BoxFit.cover, height: 100, width: double.infinity),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(stock),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

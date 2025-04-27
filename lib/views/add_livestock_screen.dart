@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AddLivestockScreen extends StatefulWidget {
   const AddLivestockScreen({super.key});
@@ -10,8 +14,8 @@ class AddLivestockScreen extends StatefulWidget {
 class _AddLivestockScreenState extends State<AddLivestockScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // State untuk masing‑masing field
-  String? _photoFileName;
+  // State
+  File? _selectedImage;
   String? _managementType;
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController();
@@ -19,13 +23,9 @@ class _AddLivestockScreenState extends State<AddLivestockScreen> {
   String? _gender;
   final _locationController = TextEditingController();
   final _priceController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
-  // Opsi dropdown
-  final _managementOptions = [
-    'Sapi',
-    'Kambing',
-    'Domba',
-  ];
+  final _managementOptions = ['Sapi', 'Kambing', 'Domba'];
   final _genderOptions = ['Jantan', 'Betina'];
 
   @override
@@ -38,27 +38,103 @@ class _AddLivestockScreenState extends State<AddLivestockScreen> {
     super.dispose();
   }
 
-  void _pickPhoto() {
-    // TODO: implement file picker
-    setState(() {
-      _photoFileName = 'Sapi Limousin.png';
-    });
+  void _showPickOptionsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Ambil foto dari:"),
+        actions: [
+          TextButton(
+            child: const Text("Kamera"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _pickPhotoFrom(ImageSource.camera);
+            },
+          ),
+          TextButton(
+            child: const Text("Galeri"),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _pickPhotoFrom(ImageSource.gallery);
+            },
+          ),
+        ],
+      ),
+    );
   }
 
-  void _saveForm() {
+  Future<void> _pickPhotoFrom(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: kirim data ke backend
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ternak berhasil ditambahkan')),
-      );
-      Navigator.pop(context);
+      try {
+        // TAMPILKAN loading dialog
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          },
+        );
+
+        var uri = Uri.parse('http://10.0.2.2/api_local/add_livestock.php');
+        var request = http.MultipartRequest('POST', uri);
+
+        if (_selectedImage != null) {
+          request.files.add(await http.MultipartFile.fromPath(
+            'photo',
+            _selectedImage!.path,
+          ));
+        }
+
+        request.fields['type'] = _managementType ?? '';
+        request.fields['name'] = _nameController.text;
+        request.fields['quantity'] = _quantityController.text;
+        request.fields['weight'] = _weightController.text;
+        request.fields['gender'] = _gender ?? '';
+        request.fields['location'] = _locationController.text;
+        request.fields['price'] = _priceController.text;
+
+        var response = await request.send();
+        var responseData = await response.stream.bytesToString();
+        final data = jsonDecode(responseData);
+
+        // TUTUP loading dialog
+        Navigator.of(context).pop();
+
+        if (data['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ternak berhasil ditambahkan')),
+          );
+          Navigator.pop(context, true); // Memberikan signal untuk reload data
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal tambah ternak: ${data['message']}')),
+          );
+        }
+      } catch (e) {
+        // TUTUP loading dialog jika error
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF3E0), // merah muda lembut
+      backgroundColor: const Color(0xFFFFF3E0),
       appBar: AppBar(
         title: const Text('Form Input'),
         backgroundColor: Colors.green,
@@ -69,180 +145,54 @@ class _AddLivestockScreenState extends State<AddLivestockScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // Tambahkan Foto
-              Text(
-                'Tambahkan Foto *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
+              _buildSectionTitle('Tambahkan Foto *'),
               OutlinedButton(
-                onPressed: _pickPhoto,
+                onPressed: () => _showPickOptionsDialog(context),
                 style: OutlinedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: const BorderSide(color: Colors.grey),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    _photoFileName ?? 'Pilih Foto...',
-                    style: TextStyle(color: Colors.grey[700]),
-                  ),
-                ),
+                child: _selectedImage == null
+                    ? Text('Pilih Foto...',
+                        style: TextStyle(color: Colors.grey[700]))
+                    : Image.file(_selectedImage!,
+                        height: 100, fit: BoxFit.cover),
               ),
               const SizedBox(height: 16),
-
-              // Dropdown Jenis Manajemen
-              Text(
-                'Jenis Ternak',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
+              _buildSectionTitle('Jenis Ternak *'),
+              _buildDropdown(
                 value: _managementType,
-                items: _managementOptions
-                    .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                    .toList(),
-                onChanged: (v) => setState(() => _managementType = v),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) => v == null ? 'Wajib memilih jenis' : null,
+                items: _managementOptions,
+                onChanged: (val) => setState(() => _managementType = val),
+                validatorMsg: 'Wajib memilih jenis ternak',
               ),
               const SizedBox(height: 16),
-
-              // Nama Hewan/Pakan/Produksi
-              Text(
-                'Nama Hewan *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  hintText: 'Masukkan nama',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-              ),
+              _buildSectionTitle('Nama Hewan *'),
+              _buildTextField(_nameController, 'Masukkan nama',
+                  validatorMsg: 'Nama wajib diisi'),
               const SizedBox(height: 16),
-
-              // Jumlah
-              Text(
-                'Jumlah *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _quantityController,
-                decoration: InputDecoration(
-                  hintText: 'Misal: 40 Ekor',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-              ),
+              _buildSectionTitle('Jumlah *'),
+              _buildTextField(_quantityController, 'Misal: 40', isNumber: true),
               const SizedBox(height: 16),
-
-              // Berat
-              Text(
-                'Berat *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _weightController,
-                decoration: InputDecoration(
-                  hintText: 'Misal: 100 kg',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-              ),
+              _buildSectionTitle('Berat *'),
+              _buildTextField(_weightController, 'Misal: 100', isNumber: true),
               const SizedBox(height: 16),
-
-              // Jenis Kelamin
-              Text(
-                'Jenis Kelamin *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
+              _buildSectionTitle('Jenis Kelamin *'),
+              _buildDropdown(
                 value: _gender,
-                items: _genderOptions
-                    .map((g) => DropdownMenuItem(
-                          value: g,
-                          child: Text(g),
-                        ))
-                    .toList(),
-                onChanged: (v) => setState(() => _gender = v),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) =>
-                    v == null ? 'Wajib memilih jenis kelamin' : null,
+                items: _genderOptions,
+                onChanged: (val) => setState(() => _gender = val),
+                validatorMsg: 'Wajib memilih jenis kelamin',
               ),
               const SizedBox(height: 16),
-
-              // Lokasi
-              Text(
-                'Lokasi *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  hintText: 'Masukkan lokasi',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-              ),
+              _buildSectionTitle('Lokasi *'),
+              _buildTextField(_locationController, 'Masukkan lokasi'),
               const SizedBox(height: 16),
-
-              // Harga
-              Text(
-                'Harga *',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.grey[800]),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _priceController,
-                decoration: InputDecoration(
-                  hintText: 'Misal: Rp 40.000.000',
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Wajib diisi' : null,
-              ),
-
+              _buildSectionTitle('Harga *'),
+              _buildTextField(_priceController, 'Misal: 40000000',
+                  isNumber: true),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -250,21 +200,63 @@ class _AddLivestockScreenState extends State<AddLivestockScreen> {
                 child: ElevatedButton(
                   onPressed: _saveForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green, // warna coklat
+                    backgroundColor: Colors.green,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8)),
                   ),
                   child: const Text('Tambahkan Ternak',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white)),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[800]),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint,
+      {bool isNumber = false, String? validatorMsg}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      validator: (v) {
+        if (v == null || v.isEmpty) return validatorMsg ?? 'Wajib diisi';
+        return null;
+      },
+    );
+  }
+
+  Widget _buildDropdown(
+      {required String? value,
+      required List<String> items,
+      required Function(String?) onChanged,
+      required String validatorMsg}) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      items:
+          items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      validator: (v) => v == null ? validatorMsg : null,
     );
   }
 }
