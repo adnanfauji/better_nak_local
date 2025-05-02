@@ -36,7 +36,8 @@ class MyAccountScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
+                MaterialPageRoute(
+                    builder: (context) => CartScreen(userId: 'yourUserIdHere')),
               );
             },
           ),

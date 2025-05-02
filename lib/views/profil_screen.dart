@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'login_screen.dart';
+import 'login_screen.dart'; // Ensure this file contains the definition of LoginScreen
 import 'cart_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -22,7 +22,8 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
+                MaterialPageRoute(
+                    builder: (context) => CartScreen(userId: '12345')),
               );
             },
           ),

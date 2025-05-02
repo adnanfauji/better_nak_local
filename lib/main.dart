@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'views/splash_screen.dart'; // Tambahkan SplashScreen
+import 'views/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,6 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Better-Nak',
       home: SplashScreen(),
-      // Awali dengan Splash Screen
     );
   }
 }

@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
-import 'payment_method_screen.dart';
+// import 'package:http/http.dart' as http;
+// import 'dart:convert';
+
 import 'select_address_screen.dart';
+import 'payment_method_screen.dart';
 
 class CheckoutScreen extends StatefulWidget {
-  const CheckoutScreen({super.key});
+  final String userId;
+  final List<dynamic> cartItems;
+
+  const CheckoutScreen(
+      {super.key, required this.userId, required this.cartItems});
 
   @override
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  // Menyimpan alamat yang dipilih
+  // alamat
   Map<String, String> currentAddress = {
     'name': 'Sasandra Mobile Shohib',
     'phone': '(082) 3273-4589',
@@ -18,28 +25,61 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'Karawang, Jawa Barat, Indonesia\nKecamatan Klari, Karawang, Jawa Barat, 41361',
   };
 
-  // Navigasi ke SelectAddressScreen dan perbarui alamat
-  Future<void> _navigateToSelectAddress() async {
-    final selectedAddress = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const SelectAddressScreen()),
-    );
+  String currentPaymentMethod = 'Transfer Bank';
+  bool isLoading = true;
 
-    if (selectedAddress != null) {
-      setState(() {
-        currentAddress = selectedAddress;
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  // hitung subtotal produk
+  int get subtotalProducts => widget.cartItems.fold(0, (sum, item) {
+        final price = int.tryParse(item['price'].toString()) ?? 0;
+        final qty = int.tryParse(item['quantity'].toString()) ?? 1;
+        return sum + (price * qty);
       });
+
+  // biaya kirim tetap, misalnya
+  final int shippingCost = 50000;
+
+  int get totalPayment => subtotalProducts + shippingCost;
+
+  Future<void> _navigateToSelectAddress() async {
+    final selected = await Navigator.push<Map<String, String>>(
+      context,
+      MaterialPageRoute(builder: (_) => const SelectAddressScreen()),
+    );
+    if (selected != null) {
+      setState(() => currentAddress = selected);
     }
+  }
+
+  Future<void> _navigateToPaymentMethod() async {
+    final selected = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const PaymentMethodScreen()),
+    );
+    if (selected != null) {
+      setState(() => currentPaymentMethod = selected);
+    }
+  }
+
+  void _createOrder() {
+    // TODO: panggil API buat pesanan dengan cartItems, currentAddress, currentPaymentMethod
+    // lalu bersihkan keranjang atau navigasi ke halaman sukses
+    print('Order: ${widget.cartItems}');
+    print('Address: $currentAddress');
+    print('Payment: $currentPaymentMethod');
+    print('Total: $totalPayment');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Checkout',
-          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Checkout',
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.green),
           onPressed: () => Navigator.pop(context),
@@ -51,7 +91,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Alamat Pengiriman
+            // Alamat
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -62,12 +102,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${currentAddress['name']} - ${currentAddress['phone']}',
+                    '${currentAddress['name']} • ${currentAddress['phone']}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    currentAddress['address'] ?? '',
+                    currentAddress['address']!,
                     style: const TextStyle(color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
@@ -93,55 +133,52 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Produk di Checkout
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Row(
+            // List produk
+            ListView.separated(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              itemCount: widget.cartItems.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, i) {
+                final item = widget.cartItems[i];
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
                     children: [
-                      Image.asset(
-                        'images/kambing2.jpg',
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          item['photo'],
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Image.asset(
+                              'images/default.jpg',
+                              width: 50,
+                              height: 50),
+                        ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Domba Jokal',
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            SizedBox(height: 4),
-                            Text('500-600kg'),
-                            SizedBox(height: 4),
-                            Text('Rp2.450.000',
-                                style: TextStyle(color: Colors.green)),
+                            Text(item['name'],
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text('Rp${item['price']} × ${item['quantity']}'),
                           ],
                         ),
                       ),
-                      const Text('x1'),
                     ],
                   ),
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // Logika hapus item
-                      },
-                      child: const Text(
-                        'Hapus',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 16),
 
@@ -157,23 +194,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   const Text('Metode Pembayaran'),
                   InkWell(
-                    onTap: () async {
-                      final selectedMethod = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const PaymentMethodScreen()),
-                      );
-
-                      if (selectedMethod != null) {
-                        // Aksi setelah memilih metode pembayaran
-                        print('Metode Pembayaran: $selectedMethod');
-                      }
-                    },
-                    child: const Row(
+                    onTap: _navigateToPaymentMethod,
+                    child: Row(
                       children: [
-                        Text('Transfer Bank',
-                            style: TextStyle(color: Colors.green)),
-                        Icon(Icons.arrow_forward_ios, size: 16),
+                        Text(currentPaymentMethod,
+                            style: const TextStyle(color: Colors.green)),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_forward_ios, size: 16),
                       ],
                     ),
                   ),
@@ -182,7 +209,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Rincian Pembayaran
+            // Rincian Harga
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -192,15 +219,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildPaymentDetail('Subtotal Produk', 'Rp2.450.000'),
-                  _buildPaymentDetail('Subtotal Pengiriman', 'Rp50.000'),
-                  _buildPaymentDetail('Biaya Layanan', 'Rp0'),
+                  _buildDetailRow('Subtotal Produk', 'Rp$subtotalProducts'),
+                  _buildDetailRow('Ongkos Kirim', 'Rp$shippingCost'),
+                  _buildDetailRow('Biaya Layanan', 'Rp0'),
                   const Divider(),
-                  _buildPaymentDetail(
-                    'Total Pembayaran',
-                    'Rp2.500.000',
-                    isBold: true,
-                  ),
+                  _buildDetailRow('Total Pembayaran', 'Rp$totalPayment',
+                      isBold: true),
                 ],
               ),
             ),
@@ -213,30 +237,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Total',
-                      style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  Text(
-                    'Rp2.500.000',
-                    style: TextStyle(
+              // Wrap Total dengan Expanded agar bisa menyesuaikan ruang
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Total', style: TextStyle(color: Colors.grey)),
+                    Text(
+                      'Rp$totalPayment',
+                      style: const TextStyle(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14),
-                  ),
-                ],
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow
+                          .ellipsis, // Pastikan jika total terlalu panjang, teks akan memendek
+                    ),
+                  ],
+                ),
               ),
+              // Tombol Buat Pesanan dengan sedikit padding
+              const SizedBox(width: 16),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 ),
-                onPressed: () {
-                  // Aksi buat pesanan
-                },
+                onPressed: _createOrder,
                 child: const Text('Buat Pesanan',
                     style: TextStyle(color: Colors.white)),
               ),
@@ -247,9 +278,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // Widget untuk membangun detail pembayaran
-  Widget _buildPaymentDetail(String title, String value,
-      {bool isBold = false}) {
+  Widget _buildDetailRow(String title, String value, {bool isBold = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(

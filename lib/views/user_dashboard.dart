@@ -6,10 +6,12 @@ import 'cart_screen.dart';
 import 'message_screen.dart';
 import 'notification_screen.dart';
 import 'my_account_screen.dart';
+import 'livestock_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final String name;
-  const HomeScreen({super.key, required this.name});
+  final String userId;
+  const HomeScreen({super.key, required this.name, required this.userId});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -18,24 +20,55 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   List<dynamic> _ads = [];
+  List<String> _categories = [];
   bool _adsLoading = true;
+  String? _selectedCategory;
 
   @override
   void initState() {
     super.initState();
+    fetchCategories();
     fetchAdvertised();
   }
 
-  Future<void> fetchAdvertised() async {
+  Future<void> fetchCategories() async {
+    try {
+      final uri =
+          Uri.parse('http://10.0.2.2/api_local/get_advertised_livestock.php');
+      final res = await http.get(uri);
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        if (body['success']) {
+          final data = body['data'];
+          final types = data
+              .map<String>((item) => item['type'] as String)
+              .toSet()
+              .toList();
+          setState(() {
+            _categories = types;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetch categories: $e');
+    }
+  }
+
+  Future<void> fetchAdvertised({String? category}) async {
     setState(() => _adsLoading = true);
     try {
-      final res = await http.get(
-          Uri.parse('http://10.0.2.2/api_local/get_advertised_livestock.php'));
+      final uri = category == null
+          ? Uri.parse('http://10.0.2.2/api_local/get_advertised_livestock.php')
+          : Uri.parse(
+              'http://10.0.2.2/api_local/get_advertised_livestock.php?type=${Uri.encodeComponent(category)}');
+
+      final res = await http.get(uri);
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success']) {
           setState(() {
             _ads = body['data'];
+            _selectedCategory = category;
           });
         }
       }
@@ -87,7 +120,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const CartScreen()),
+                MaterialPageRoute(
+                    builder: (context) => CartScreen(userId: widget.userId)),
               );
             },
           ),
@@ -143,18 +177,44 @@ class _HomeScreenState extends State<HomeScreen> {
             const Text('Kategori',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            GridView.count(
-              shrinkWrap: true,
-              crossAxisCount: 3,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: 3,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                _categoryCard('Sapi', LucideIcons.beef),
-                _categoryCard('Sheep', LucideIcons.beer),
-                _categoryCard('Domba', LucideIcons.bird),
+                ..._categories.map((category) {
+                  final isSelected = _selectedCategory == category;
+                  return OutlinedButton(
+                    onPressed: () => fetchAdvertised(category: category),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: isSelected ? Colors.green : Colors.white,
+                      side: BorderSide(
+                          color: isSelected ? Colors.green : Colors.amber,
+                          width: 1.5),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      category,
+                      style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.green),
+                    ),
+                  );
+                }),
+                if (_selectedCategory != null)
+                  OutlinedButton(
+                    onPressed: () => fetchAdvertised(category: null),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.red[50],
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Reset Filter',
+                        style: TextStyle(color: Colors.red)),
+                  ),
               ],
             ),
+
             const SizedBox(height: 20),
 
             // Ternak Terkini (Iklan Terkini)
@@ -177,38 +237,62 @@ class _HomeScreenState extends State<HomeScreen> {
                             final ad = _ads[i];
                             return SizedBox(
                               width: 140,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      ad['photo'],
-                                      height: 100,
-                                      width: 140,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) => Image.asset(
-                                        'images/default.jpg',
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          LivestockDetailScreen(
+                                        data: ad,
+                                        userId: widget.userId,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image.network(
+                                        ad['photo'],
                                         height: 100,
                                         width: 140,
                                         fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            Image.asset(
+                                          'images/default.jpg',
+                                          height: 100,
+                                          width: 140,
+                                          fit: BoxFit.cover,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    ad['name'] ?? '',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Rp${ad['price'] ?? '0'}',
-                                    style: const TextStyle(color: Colors.green),
-                                  ),
-                                ],
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      ad['name'] ?? '',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Rp${ad['price'] ?? '0'}',
+                                      style:
+                                          const TextStyle(color: Colors.green),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      ad['location'] ?? '',
+                                      style:
+                                          const TextStyle(color: Colors.grey),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
                           },
@@ -216,18 +300,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _categoryCard(String title, IconData icon) {
-    return OutlinedButton.icon(
-      onPressed: () {},
-      icon: Icon(icon, color: Colors.green),
-      label: Text(title, style: const TextStyle(color: Colors.green)),
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: Colors.amber, width: 1.5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
