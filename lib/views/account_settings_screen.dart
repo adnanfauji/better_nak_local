@@ -1,9 +1,10 @@
 import 'package:better_nak_local/views/address_screen.dart';
 import 'package:flutter/material.dart';
-import 'account_screen.dart';
+import 'package:better_nak_local/views/account_screen.dart';
 
 class AccountSettingsScreen extends StatelessWidget {
-  const AccountSettingsScreen({super.key});
+  const AccountSettingsScreen(
+      {super.key, required String currentUsername, required String userId});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +46,10 @@ class AccountSettingsScreen extends StatelessWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AccountScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const AccountScreen(
+                          userId: '',
+                        )),
               );
             },
           ),

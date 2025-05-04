@@ -1,10 +1,11 @@
+// ignore_for_file: avoid_print
+
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../config/config.dart';
 
 class AuthController {
-  // final String baseUrl = "http://192.168.147.188/api_local"; // URL asli
-  final String baseUrl =
-      "http://10.0.2.2/api_local"; // URL untuk emulator Android Studio
+  final String baseUrl = Config.BASE_URL;
 
   Future<bool> checkServerConnection() async {
     try {

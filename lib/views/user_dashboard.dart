@@ -1,7 +1,10 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/config.dart';
 import 'cart_screen.dart';
 import 'message_screen.dart';
 import 'notification_screen.dart';
@@ -33,8 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> fetchCategories() async {
     try {
-      final uri =
-          Uri.parse('http://10.0.2.2/api_local/get_advertised_livestock.php');
+      final uri = Uri.parse('${Config.BASE_URL}/get_advertised_livestock.php');
       final res = await http.get(uri);
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
@@ -58,9 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _adsLoading = true);
     try {
       final uri = category == null
-          ? Uri.parse('http://10.0.2.2/api_local/get_advertised_livestock.php')
+          ? Uri.parse('${Config.BASE_URL}/get_advertised_livestock.php')
           : Uri.parse(
-              'http://10.0.2.2/api_local/get_advertised_livestock.php?type=${Uri.encodeComponent(category)}');
+              '${Config.BASE_URL}/get_advertised_livestock.php?type=${Uri.encodeComponent(category)}');
 
       final res = await http.get(uri);
       if (res.statusCode == 200) {
@@ -101,7 +103,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (index == 3) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const MyAccountScreen()),
+        MaterialPageRoute(
+            builder: (context) => MyAccountScreen(userId: widget.userId)),
       );
     }
   }

@@ -1,8 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import '../config/config.dart';
 
 class EditLivestockScreen extends StatefulWidget {
   final Map<String, dynamic> item;
@@ -77,7 +81,7 @@ class _EditLivestockScreenState extends State<EditLivestockScreen> {
         barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()));
     var req = http.MultipartRequest(
-        'POST', Uri.parse('http://10.0.2.2/api_local/update_livestock.php'));
+        'POST', Uri.parse('${Config.BASE_URL}/update_livestock.php'));
     req.fields['id'] = widget.item['id'].toString();
     req.fields['type'] = _managementType;
     req.fields['name'] = _nameCtrl.text;

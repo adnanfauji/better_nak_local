@@ -1,8 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import '../config/config.dart';
 
 class AddLivestockScreen extends StatefulWidget {
   const AddLivestockScreen({super.key});
@@ -86,7 +90,7 @@ class _AddLivestockScreenState extends State<AddLivestockScreen> {
           },
         );
 
-        var uri = Uri.parse('http://10.0.2.2/api_local/add_livestock.php');
+        var uri = Uri.parse('${Config.BASE_URL}/add_livestock.php');
         var request = http.MultipartRequest('POST', uri);
 
         if (_selectedImage != null) {

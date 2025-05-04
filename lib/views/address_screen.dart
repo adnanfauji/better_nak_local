@@ -90,7 +90,7 @@ class AddressScreen extends StatelessWidget {
             const SizedBox(height: 8),
 
             // Tag (Utama, Alamat Toko, Alamat Pengembalian)
-            if (tags != null) ...tags.map((tag) => _buildTag(tag)).toList(),
+            if (tags != null) ...tags.map((tag) => _buildTag(tag)),
 
             // Tombol Ubah
             Align(

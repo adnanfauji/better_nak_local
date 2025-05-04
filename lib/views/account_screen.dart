@@ -1,15 +1,58 @@
-import 'package:better_nak_local/views/profil_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:better_nak_local/views/profil_screen.dart';
+import '../config/config.dart';
 
 class AccountScreen extends StatefulWidget {
-  const AccountScreen({super.key});
+  final String userId;
+
+  const AccountScreen({super.key, required this.userId});
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  bool isFingerprintEnabled = true; // Status toggle sidik jari
+  bool isFingerprintEnabled = true;
+  String username = '';
+  String email = '';
+  String phone = '';
+  String profilePicture = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${Config.BASE_URL}/get_users.php?userId=${widget.userId}'),
+      );
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body);
+        if (body['success']) {
+          final data = body['data'];
+          setState(() {
+            username = data['name'] ?? '';
+            email = data['email'] ?? '';
+            phone = data['phone'] ?? '';
+            profilePicture = data['profile_picture'] ?? '';
+          });
+        } else {
+          print('API Error: ${body['message']}');
+        }
+      } else {
+        print('Failed to load user data: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +71,6 @@ class _AccountScreenState extends State<AccountScreen> {
       ),
       body: ListView(
         children: [
-          // Header Akun
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             color: Colors.grey[200],
@@ -43,47 +85,41 @@ class _AccountScreenState extends State<AccountScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                MaterialPageRoute(
+                  builder: (context) => ProfileScreen(userId: widget.userId),
+                ),
               );
             },
           ),
           buildSettingItem(
             title: 'Username',
-            value: 'Adnan Fauji',
-            onTap: () {
-              // Navigasi ke halaman ubah username
-            },
+            value: username,
+            onTap: () {},
           ),
           buildSettingItem(
             title: 'No. Handphone',
-            value: '*****41',
-            onTap: () {
-              // Navigasi ke halaman ubah nomor handphone
-            },
+            value: phone.isNotEmpty
+                ? '*****${phone.substring(phone.length - 2)}'
+                : '',
+            onTap: () {},
           ),
           buildSettingItem(
             title: 'Email',
-            value: 'a********8@gmail.com',
-            onTap: () {
-              // Navigasi ke halaman ubah email
-            },
+            value: email.isNotEmpty
+                ? '${email[0]}*******${email[email.indexOf('@') - 1]}${email.substring(email.indexOf('@'))}'
+                : '',
+            onTap: () {},
           ),
           buildSettingItem(
             title: 'Akun Media Sosial',
             value: '',
-            onTap: () {
-              // Navigasi ke halaman media sosial
-            },
+            onTap: () {},
           ),
           buildSettingItem(
             title: 'Ganti Password',
             value: '',
-            onTap: () {
-              // Navigasi ke halaman ganti password
-            },
+            onTap: () {},
           ),
-
-          // Verifikasi Sidik Jari
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
@@ -120,7 +156,6 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  // Widget Item Pengaturan
   Widget buildSettingItem({
     required String title,
     required String value,

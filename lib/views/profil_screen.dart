@@ -1,20 +1,141 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'login_screen.dart'; // Ensure this file contains the definition of LoginScreen
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
+import 'dart:convert';
+import '../config/config.dart';
+import 'edit_profile_field_screen.dart';
+import 'login_screen.dart';
 import 'cart_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends StatefulWidget {
+  final String userId;
+
+  const ProfileScreen({super.key, required this.userId});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+
+  String? profilePicture;
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() => isLoading = true);
+    try {
+      final response = await http.get(
+        Uri.parse('${Config.BASE_URL}/get_user.php?userId=${widget.userId}'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          setState(() {
+            nameController.text = data['data']['name'];
+            emailController.text = data['data']['email'];
+            phoneController.text = data['data']['phone'];
+            profilePicture = data['data']['profile_picture'];
+          });
+        } else {
+          _showErrorSnackbar(data['message']);
+        }
+      } else {
+        _showErrorSnackbar('Gagal memuat data pengguna.');
+      }
+    } catch (e) {
+      _showErrorSnackbar('Terjadi kesalahan: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      try {
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse('${Config.BASE_URL}/upload_profile_picture.php'),
+        );
+        request.fields['userId'] = widget.userId;
+        request.files.add(await http.MultipartFile.fromPath(
+            'profile_picture', pickedFile.path));
+
+        var response = await request.send();
+        final responseBody = await response.stream.bytesToString();
+        final result = json.decode(responseBody);
+
+        if (result['success']) {
+          setState(() {
+            profilePicture = result['filename'];
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Foto profil berhasil diubah')),
+          );
+        } else {
+          _showErrorSnackbar(result['message']);
+        }
+      } catch (e) {
+        _showErrorSnackbar('Terjadi kesalahan: $e');
+      }
+    }
+  }
+
+  Future<void> _updateProfile() async {
+    setState(() => isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('${Config.BASE_URL}/update_profile.php'),
+        body: {
+          'userId': widget.userId,
+          'name': nameController.text,
+          'email': emailController.text,
+          'phone': phoneController.text,
+        },
+      );
+
+      final result = json.decode(response.body);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result['message'])),
+      );
+    } catch (e) {
+      _showErrorSnackbar('Terjadi kesalahan: $e');
+    } finally {
+      setState(() => isLoading = false);
+    }
+  }
+
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title:
-            const Text('Profile saya', style: TextStyle(color: Colors.green)),
+        title: const Text('Profil Saya', style: TextStyle(color: Colors.green)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.green),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context, nameController.text);
+          },
         ),
         actions: [
           IconButton(
@@ -23,7 +144,7 @@ class ProfileScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => CartScreen(userId: '12345')),
+                    builder: (context) => CartScreen(userId: widget.userId)),
               );
             },
           ),
@@ -31,69 +152,105 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    const CircleAvatar(
-                      radius: 40,
-                      backgroundImage: AssetImage('images/user.png'),
+                    Center(
+                      child: Column(
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundImage: profilePicture != null
+                                ? NetworkImage(
+                                    '${Config.BASE_URL}/$profilePicture')
+                                : const AssetImage('images/user.png')
+                                    as ImageProvider,
+                          ),
+                          TextButton(
+                            onPressed: _pickAndUploadImage,
+                            child: const Text('Ubah Foto',
+                                style: TextStyle(color: Colors.green)),
+                          ),
+                        ],
+                      ),
                     ),
-                    TextButton(
-                      onPressed: () {},
-                      child: const Text('Ubah Foto',
-                          style: TextStyle(color: Colors.green)),
+                    const SizedBox(height: 20),
+                    _buildEditableTile('Nama', nameController.text, 'username'),
+                    _buildEditableTile('Email', emailController.text, 'email'),
+                    _buildEditableTile(
+                        'Nomor HP', phoneController.text, 'phone'),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 12),
+                      ),
+                      onPressed: _updateProfile,
+                      child: const Text('Simpan Perubahan',
+                          style: TextStyle(color: Colors.white)),
+                    ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginScreen()),
+                        );
+                      },
+                      child: const Text('Keluar',
+                          style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              buildProfileItem('Nama', 'Adnan Fauji'),
-              buildProfileItem('Email', 'adnanfauji48@gmail.com'),
-              buildProfileItem('Nomor Telepon', '0812 8*** ****'),
-              buildProfileItem('Password', '********'),
-              const SizedBox(height: 40),
-              Center(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 12),
-                  ),
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const LoginScreen()),
-                  ),
-                  child: const Text('Keluar',
-                      style: TextStyle(color: Colors.white, fontSize: 16)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 
-  Widget buildProfileItem(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.black54)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
+  Widget _buildEditableTile(String label, String value, String field) {
+    return ListTile(
+      title: Text(label),
+      subtitle: Text(value),
+      trailing: const Icon(Icons.edit, color: Colors.green),
+      onTap: () async {
+        final updatedValue = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EditProfileFieldScreen(
+              userId: widget.userId,
+              field: field,
+              currentValue: value,
+            ),
+          ),
+        );
+
+        if (updatedValue != null) {
+          setState(() {
+            if (field == 'username') {
+              nameController.text = updatedValue;
+            } else if (field == 'email') {
+              emailController.text = updatedValue;
+            } else if (field == 'phone') {
+              phoneController.text = updatedValue;
+            }
+          });
+        }
+      },
     );
   }
 }

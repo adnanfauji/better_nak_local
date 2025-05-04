@@ -1,9 +1,12 @@
+// ignore_for_file: use_build_context_synchronously, avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../config/config.dart';
 import 'cart_screen.dart';
 
 class LivestockDetailScreen extends StatefulWidget {
@@ -38,7 +41,7 @@ class _LivestockDetailScreenState extends State<LivestockDetailScreen> {
 
   Future<void> addToCart(
       BuildContext context, String userId, String livestockId) async {
-    final url = Uri.parse('http://10.0.2.2/api_local/add_to_cart.php');
+    final url = Uri.parse('${Config.BASE_URL}/add_to_cart.php');
     try {
       final response = await http.post(
         url,
@@ -75,7 +78,7 @@ class _LivestockDetailScreenState extends State<LivestockDetailScreen> {
   }
 
   Future<void> _checkFavorite() async {
-    final url = Uri.parse('http://10.0.2.2/api_local/check_favorite.php');
+    final url = Uri.parse('${Config.BASE_URL}/check_favorite.php');
     try {
       final response = await http.post(
         url,
@@ -98,7 +101,7 @@ class _LivestockDetailScreenState extends State<LivestockDetailScreen> {
   }
 
   Future<void> toggleFavorite(String userId, String livestockId) async {
-    final url = Uri.parse('http://10.0.2.2/api_local/toggle_favorite.php');
+    final url = Uri.parse('${Config.BASE_URL}/toggle_favorite.php');
 
     try {
       final response = await http.post(

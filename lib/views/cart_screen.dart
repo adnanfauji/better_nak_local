@@ -1,6 +1,9 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../config/config.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends StatefulWidget {
@@ -26,7 +29,7 @@ class _CartScreenState extends State<CartScreen> {
     setState(() => _loading = true);
     try {
       final res = await http.get(Uri.parse(
-          'http://10.0.2.2/api_local/get_cart.php?user_id=${widget.userId}'));
+          '${Config.BASE_URL}/get_cart.php?user_id=${widget.userId}'));
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         if (body['success']) {
@@ -120,7 +123,7 @@ class _CartScreenState extends State<CartScreen> {
 
     for (final id in selectedIds) {
       await http.post(
-        Uri.parse('http://10.0.2.2/api_local/delete_cart_item.php'),
+        Uri.parse('${Config.BASE_URL}/delete_cart_item.php'),
         body: {'cart_id': id},
       );
     }
@@ -140,7 +143,7 @@ class _CartScreenState extends State<CartScreen> {
     for (final id in selectedIds) {
       try {
         final response = await http.post(
-          Uri.parse('http://10.0.2.2/api_local/favorite_item.php'),
+          Uri.parse('${Config.BASE_URL}/favorite_item.php'),
           body: {'cart_id': id},
         );
 

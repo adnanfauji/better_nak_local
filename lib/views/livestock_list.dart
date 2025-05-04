@@ -1,8 +1,11 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'add_livestock_screen.dart';
 import 'edit_livestock_screen.dart';
+import '../config/config.dart';
 
 class LivestockListCompact extends StatefulWidget {
   const LivestockListCompact({super.key});
@@ -24,8 +27,8 @@ class _LivestockListCompactState extends State<LivestockListCompact> {
   Future<void> fetchLivestock() async {
     setState(() => isLoading = true);
     try {
-      final response = await http
-          .get(Uri.parse('http://10.0.2.2/api_local/get_livestock.php'));
+      final response =
+          await http.get(Uri.parse('${Config.BASE_URL}/get_livestock.php'));
 
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
@@ -154,7 +157,7 @@ class _LivestockListCompactState extends State<LivestockListCompact> {
                                   onPressed: () async {
                                     final response = await http.post(
                                       Uri.parse(
-                                          'http://10.0.2.2/api_local/advertise_livestock.php'),
+                                          '${Config.BASE_URL}/advertise_livestock.php'),
                                       body: {
                                         'id': item['id'].toString(),
                                       },
