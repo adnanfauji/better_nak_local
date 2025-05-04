@@ -22,8 +22,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
 
-  String? profilePicture;
-  bool isLoading = false;
+  String profilePicture = '';
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -32,30 +32,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserData() async {
-    setState(() => isLoading = true);
     try {
-      final response = await http.get(
-        Uri.parse('${Config.BASE_URL}/get_user.php?userId=${widget.userId}'),
+      final response = await http.post(
+        Uri.parse('${Config.BASE_URL}/get_users.php'),
+        body: {'userId': widget.userId},
       );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success']) {
-          setState(() {
-            nameController.text = data['data']['name'];
-            emailController.text = data['data']['email'];
-            phoneController.text = data['data']['phone'];
-            profilePicture = data['data']['profile_picture'];
-          });
-        } else {
-          _showErrorSnackbar(data['message']);
-        }
+      final result = json.decode(response.body);
+
+      if (result['success']) {
+        final userData = result['data'];
+        setState(() {
+          nameController.text = userData['name'];
+          emailController.text = userData['email'];
+          phoneController.text = userData['phone'];
+          profilePicture = userData['profile_picture'] ?? '';
+          isLoading = false;
+        });
       } else {
-        _showErrorSnackbar('Gagal memuat data pengguna.');
+        _showErrorSnackbar(result['message']);
+        setState(() => isLoading = false);
       }
     } catch (e) {
-      _showErrorSnackbar('Terjadi kesalahan: $e');
-    } finally {
+      _showErrorSnackbar('Gagal memuat data profil.');
       setState(() => isLoading = false);
     }
   }
@@ -70,15 +69,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'POST',
           Uri.parse('${Config.BASE_URL}/upload_profile_picture.php'),
         );
+
         request.fields['userId'] = widget.userId;
         request.files.add(await http.MultipartFile.fromPath(
-            'profile_picture', pickedFile.path));
+          'profile_picture',
+          pickedFile.path,
+        ));
 
-        var response = await request.send();
-        final responseBody = await response.stream.bytesToString();
+        var streamedResponse = await request.send();
+        final responseBody = await streamedResponse.stream.bytesToString();
         final result = json.decode(responseBody);
 
-        if (result['success']) {
+        if (result['success'] == true) {
           setState(() {
             profilePicture = result['filename'];
           });
@@ -87,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SnackBar(content: Text('Foto profil berhasil diubah')),
           );
         } else {
-          _showErrorSnackbar(result['message']);
+          _showErrorSnackbar(result['message'] ?? 'Gagal mengunggah');
         }
       } catch (e) {
         _showErrorSnackbar('Terjadi kesalahan: $e');
@@ -155,68 +157,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Center(
-                      child: Column(
-                        children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundImage: profilePicture != null
-                                ? NetworkImage(
-                                    '${Config.BASE_URL}/$profilePicture')
-                                : const AssetImage('images/user.png')
-                                    as ImageProvider,
-                          ),
-                          TextButton(
-                            onPressed: _pickAndUploadImage,
-                            child: const Text('Ubah Foto',
-                                style: TextStyle(color: Colors.green)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    _buildEditableTile('Nama', nameController.text, 'username'),
-                    _buildEditableTile('Email', emailController.text, 'email'),
-                    _buildEditableTile(
-                        'Nomor HP', phoneController.text, 'phone'),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Center(
+                    child: Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: profilePicture.isNotEmpty
+                              ? NetworkImage(
+                                  '${Config.BASE_URL}/$profilePicture')
+                              : const AssetImage('images/user.png')
+                                  as ImageProvider,
                         ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 12),
-                      ),
-                      onPressed: _updateProfile,
-                      child: const Text('Simpan Perubahan',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        TextButton(
+                          onPressed: _pickAndUploadImage,
+                          child: const Text('Ubah Foto',
+                              style: TextStyle(color: Colors.green)),
                         ),
-                      ),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginScreen()),
-                        );
-                      },
-                      child: const Text('Keluar',
-                          style: TextStyle(color: Colors.white)),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildEditableTile('Nama', nameController.text, 'username'),
+                  _buildEditableTile('Email', emailController.text, 'email'),
+                  _buildEditableTile('Nomor HP', phoneController.text, 'phone'),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 40, vertical: 12),
+                    ),
+                    onPressed: _updateProfile,
+                    child: const Text('Simpan Perubahan',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const LoginScreen()),
+                      );
+                    },
+                    child: const Text('Keluar',
+                        style: TextStyle(color: Colors.white)),
+                  ),
+                ],
               ),
             ),
     );

@@ -8,27 +8,26 @@ import 'account_settings_screen.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
-import 'package:image_cropper/image_cropper.dart';
 import 'dart:io';
 
-Future<Map<String, dynamic>> fetchUserData(String userId) async {
-  final response = await http
-      .get(Uri.parse('${Config.BASE_URL}/get_users.php?userId=$userId'));
+// Future<Map<String, dynamic>> fetchUserData(String userId) async {
+//   final response = await http
+//       .get(Uri.parse('${Config.BASE_URL}/get_users.php?userId=$userId'));
 
-  print('Response status: ${response.statusCode}');
-  print('Response body: ${response.body}');
+//   print('Response status: ${response.statusCode}');
+//   print('Response body: ${response.body}');
 
-  if (response.statusCode == 200) {
-    final body = json.decode(response.body);
-    if (body['success']) {
-      return body['data'];
-    } else {
-      throw Exception('User not found');
-    }
-  } else {
-    throw Exception('Failed to load user data');
-  }
-}
+//   if (response.statusCode == 200) {
+//     final body = json.decode(response.body);
+//     if (body['success']) {
+//       return body['data'];
+//     } else {
+//       throw Exception('User not found');
+//     }
+//   } else {
+//     throw Exception('Failed to load user data');
+//   }
+// }
 
 class MyAccountScreen extends StatefulWidget {
   final String userId;
@@ -52,16 +51,29 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      print('Fetching data for userId: ${widget.userId}');
-      final userData = await fetchUserData(widget.userId);
+      final response = await http.post(
+        Uri.parse('${Config.BASE_URL}/get_users.php'),
+        body: {'userId': widget.userId},
+      );
 
-      setState(() {
-        userName = userData['name'];
-        userRole = userData['role'];
-        userProfilePicture = userData['profile_picture'];
-      });
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        print("DATA: $responseData"); // DEBUG
+
+        if (responseData['success']) {
+          setState(() {
+            userName = responseData['data']['name'];
+            userRole = responseData['data']['role'];
+            userProfilePicture = responseData['data']['profile_picture'];
+          });
+        } else {
+          throw Exception('User data not found or failed to load.');
+        }
+      } else {
+        throw Exception('Failed to load data');
+      }
     } catch (e) {
-      print('Error loading user data: $e');
+      print('Error fetching user data: $e');
     }
   }
 
@@ -70,57 +82,35 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
     if (pickedFile != null) {
-      // Crop image
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: pickedFile.path,
-        aspectRatioPresets: [
-          CropAspectRatioPreset.square,
-          CropAspectRatioPreset.ratio4x3,
-        ],
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Foto Profil',
-            toolbarColor: Colors.green,
-            toolbarWidgetColor: Colors.white,
-            lockAspectRatio: false,
-          ),
-          IOSUiSettings(
-            title: 'Crop Foto Profil',
-          ),
-        ],
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${Config.BASE_URL}/upload_profile_picture.php'),
       );
+      request.fields['userId'] = widget.userId;
+      request.files.add(await http.MultipartFile.fromPath(
+          'profile_picture', File(pickedFile.path).path));
 
-      if (croppedFile != null) {
-        var request = http.MultipartRequest(
-          'POST',
-          Uri.parse('${Config.BASE_URL}/upload_profile_picture.php'),
-        );
-        request.fields['userId'] = widget.userId;
-        request.files.add(await http.MultipartFile.fromPath(
-            'profile_picture', File(croppedFile.path).path));
+      var response = await request.send();
+      if (response.statusCode == 200) {
+        final responseBody = await response.stream.bytesToString();
+        final result = json.decode(responseBody);
 
-        var response = await request.send();
-        if (response.statusCode == 200) {
-          final responseBody = await response.stream.bytesToString();
-          final result = json.decode(responseBody);
-
-          if (result['success']) {
-            setState(() {
-              userProfilePicture = result['filename'];
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Foto profil berhasil diunggah')),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Upload gagal: ${result['message']}')),
-            );
-          }
+        if (result['success']) {
+          setState(() {
+            userProfilePicture = result['filename'];
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Foto profil berhasil diunggah')),
+          );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Gagal upload foto profil')),
+            SnackBar(content: Text('Upload gagal: ${result['message']}')),
           );
         }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal upload foto profil')),
+        );
       }
     }
   }
@@ -184,7 +174,7 @@ class _MyAccountScreenState extends State<MyAccountScreen> {
                     backgroundImage: userProfilePicture != null
                         ? NetworkImage(
                             '${Config.BASE_URL}/${userProfilePicture}')
-                        : const AssetImage('images/user.png'),
+                        : const AssetImage('images/user.png') as ImageProvider,
                   ),
                 ),
                 const SizedBox(width: 12),

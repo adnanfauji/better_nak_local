@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:better_nak_local/views/profil_screen.dart';
 import '../config/config.dart';
+import 'change_password_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   final String userId;
@@ -92,33 +93,17 @@ class _AccountScreenState extends State<AccountScreen> {
             },
           ),
           buildSettingItem(
-            title: 'Username',
-            value: username,
-            onTap: () {},
-          ),
-          buildSettingItem(
-            title: 'No. Handphone',
-            value: phone.isNotEmpty
-                ? '*****${phone.substring(phone.length - 2)}'
-                : '',
-            onTap: () {},
-          ),
-          buildSettingItem(
-            title: 'Email',
-            value: email.isNotEmpty
-                ? '${email[0]}*******${email[email.indexOf('@') - 1]}${email.substring(email.indexOf('@'))}'
-                : '',
-            onTap: () {},
-          ),
-          buildSettingItem(
-            title: 'Akun Media Sosial',
-            value: '',
-            onTap: () {},
-          ),
-          buildSettingItem(
             title: 'Ganti Password',
             value: '',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ChangePasswordScreen(userId: widget.userId),
+                ),
+              );
+            },
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

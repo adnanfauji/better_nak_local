@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:better_nak_local/views/account_screen.dart';
 
 class AccountSettingsScreen extends StatelessWidget {
-  const AccountSettingsScreen(
-      {super.key, required String currentUsername, required String userId});
+  final String currentUsername;
+  final String userId;
+
+  const AccountSettingsScreen({
+    super.key,
+    required this.currentUsername,
+    required this.userId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +28,7 @@ class AccountSettingsScreen extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.chat_bubble_outline, color: Colors.green),
             onPressed: () {
-              // Tambahkan navigasi ke halaman pesan atau bantuan
+              // Navigasi ke bantuan
             },
           ),
         ],
@@ -31,7 +37,6 @@ class AccountSettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
-          // Header Akun Saya
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             color: Colors.grey[200],
@@ -40,16 +45,14 @@ class AccountSettingsScreen extends StatelessWidget {
               style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
             ),
           ),
-          // Item Navigasi
           buildSettingItem(
-            title: 'Akun',
+            title: 'Akun (${currentUsername})',
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const AccountScreen(
-                          userId: '',
-                        )),
+                  builder: (context) => AccountScreen(userId: userId),
+                ),
               );
             },
           ),
@@ -73,9 +76,10 @@ class AccountSettingsScreen extends StatelessWidget {
     );
   }
 
-  // Widget Item Pengaturan
-  Widget buildSettingItem(
-      {required String title, required VoidCallback onTap}) {
+  Widget buildSettingItem({
+    required String title,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       child: Padding(

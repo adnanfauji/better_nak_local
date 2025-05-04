@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'add_address_screen.dart';
+
 class AddressScreen extends StatelessWidget {
   const AddressScreen({super.key});
 
@@ -39,7 +41,13 @@ class AddressScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton.icon(
               onPressed: () {
-                // Navigasi ke halaman tambah alamat
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        AddAddressScreen(userId: 'yourUserId'),
+                  ),
+                );
               },
               icon: const Icon(Icons.add),
               label: const Text('Tambah Alamat Baru'),

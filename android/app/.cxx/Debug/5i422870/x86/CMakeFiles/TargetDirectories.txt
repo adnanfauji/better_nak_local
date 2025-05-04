@@ -1,0 +1,2 @@
+D:/01. Sistem Informasi/Semester 4/05. Mobile Apps Project/Trial Project/better_nak_local/android/app/.cxx/Debug/5i422870/x86/CMakeFiles/edit_cache.dir
+D:/01. Sistem Informasi/Semester 4/05. Mobile Apps Project/Trial Project/better_nak_local/android/app/.cxx/Debug/5i422870/x86/CMakeFiles/rebuild_cache.dir
