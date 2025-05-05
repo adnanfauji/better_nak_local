@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:http/http.dart' as http;
@@ -180,23 +182,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _buildEditableTile('Nama', nameController.text, 'username'),
+                  _buildEditableTile('Nama', nameController.text, 'name'),
                   _buildEditableTile('Email', emailController.text, 'email'),
                   _buildEditableTile('Nomor HP', phoneController.text, 'phone'),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 12),
-                    ),
-                    onPressed: _updateProfile,
-                    child: const Text('Simpan Perubahan',
-                        style: TextStyle(color: Colors.white)),
-                  ),
                   const SizedBox(height: 20),
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -240,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         if (updatedValue != null) {
           setState(() {
-            if (field == 'username') {
+            if (field == 'name') {
               nameController.text = updatedValue;
             } else if (field == 'email') {
               emailController.text = updatedValue;
@@ -248,6 +236,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               phoneController.text = updatedValue;
             }
           });
+
+          // Muat ulang data dari server untuk memastikan sinkronisasi
+          await _loadUserData();
         }
       },
     );

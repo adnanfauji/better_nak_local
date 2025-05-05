@@ -25,8 +25,8 @@ class _EditProfileFieldScreenState extends State<EditProfileFieldScreen> {
 
   String get label {
     switch (widget.field) {
-      case 'username':
-        return 'Nama';
+      case 'name':
+        return 'Name';
       case 'email':
         return 'Email';
       case 'phone':
@@ -46,7 +46,7 @@ class _EditProfileFieldScreenState extends State<EditProfileFieldScreen> {
     setState(() => isLoading = true);
     try {
       final response = await http.post(
-        Uri.parse('${Config.BASE_URL}/update_profile_field.php'),
+        Uri.parse('${Config.BASE_URL}/update_profil.php'),
         body: {
           'userId': widget.userId,
           'field': widget.field,

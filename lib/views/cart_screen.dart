@@ -170,33 +170,38 @@ class _CartScreenState extends State<CartScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Keranjang Saya',
-            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Keranjang Saya',
+          style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.green),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              final hasSelected = _selected.contains(true);
-              if (!hasSelected) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Pilih item terlebih dahulu')),
-                );
-                return;
-              }
-              _showActionModal();
-            },
-            child: const Text(
-              'Ubah',
-              style: TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          )
-        ],
+        actions: _cartItems.isEmpty
+            ? null // Tidak menampilkan tombol "Ubah" jika keranjang kosong
+            : [
+                TextButton(
+                  onPressed: () {
+                    final hasSelected = _selected.contains(true);
+                    if (!hasSelected) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Pilih item terlebih dahulu')),
+                      );
+                      return;
+                    }
+                    _showActionModal();
+                  },
+                  child: const Text(
+                    'Ubah',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
         backgroundColor: Colors.white,
         elevation: 0,
       ),
